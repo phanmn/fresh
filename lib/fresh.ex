@@ -138,6 +138,24 @@ defmodule Fresh do
           | :close
 
   @doc """
+  Callback invoked before a WebSocket connection is attempted.
+
+  ## Parameters
+
+  * `headers` - The headers received during the connection upgrade.
+  * `state` - The current state of the module.
+
+  ## Example
+
+      def handle_connect(headers, state) do
+        {:ok, [{"key", "value"} | headers], state}
+      end
+
+  """
+  @callback handle_preconnect(headers, state()) :: {:ok, headers, state()}
+            when headers: Mint.Types.headers()
+
+  @doc """
   Callback invoked when a WebSocket connection is successfully established.
 
   ## Parameters
@@ -318,6 +336,9 @@ defmodule Fresh do
       end
 
       @doc false
+      def handle_preconnect(headers, state), do: {:ok, headers, state}
+
+      @doc false
       def handle_connect(_status, _headers, state), do: {:ok, state}
 
       @doc false
@@ -344,6 +365,7 @@ defmodule Fresh do
 
       defoverridable child_spec: 1,
                      start_link: 1,
+                     handle_preconnect: 2,
                      handle_connect: 3,
                      handle_control: 2,
                      handle_in: 2,

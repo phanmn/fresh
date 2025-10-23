@@ -90,9 +90,11 @@ defmodule Fresh.Connection do
 
     upgrade_opts = Option.mint_upgrade_opts(data.opts)
 
-    with {:ok, conn} <- Mint.HTTP.connect(http_scheme, uri.host, uri.port, connect_opts),
+    with {:ok, headers, state} <- data.module.handle_preconnect(headers, data.inner_state),
+         {:ok, conn} <- Mint.HTTP.connect(http_scheme, uri.host, uri.port, connect_opts),
          {:ok, conn, ref} <- Mint.WebSocket.upgrade(ws_scheme, conn, path, headers, upgrade_opts) do
-      {:next_state, :connected, %__MODULE__{data | connection: conn, request_ref: ref}}
+      {:next_state, :connected,
+       %__MODULE__{data | connection: conn, request_ref: ref, inner_state: state}}
     else
       {:error, reason} ->
         {:connecting_failed, reason}
