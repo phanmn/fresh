@@ -3,8 +3,16 @@ defmodule Fresh.TestClient do
 
   use Fresh
 
+  def handle_preconnect(headers, state) do
+    {:ok,
+     [
+       {"pid", state[:pid] |> :erlang.term_to_binary() |> Base.encode64()},
+       {"ref", state[:ref] |> :erlang.term_to_binary() |> Base.encode64()}
+     ] ++ headers, Map.put(Map.new(state), :preconnect, "preconnect")}
+  end
+
   def handle_connect(_status, _headers, state) do
-    {:reply, {:text, state[:welcome]}, state}
+    {:reply, [{:text, state[:welcome]}, {:text, state[:preconnect]}], state}
   end
 
   def handle_control(frame, state) do

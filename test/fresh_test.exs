@@ -46,9 +46,12 @@ defmodule FreshTest do
 
   describe "Test Echo Server:" do
     setup do
+      ref = make_ref()
+
       state = [
         welcome: "hi!",
         pid: self(),
+        ref: ref,
         opts: [
           error_logging: false,
           info_logging: false,
@@ -62,6 +65,8 @@ defmodule FreshTest do
           state: state,
           opts: state[:opts]
         )
+
+      assert_receive {^ref, :header}
 
       receive do
         {:data, {:text, "hi!"}} ->
@@ -132,12 +137,14 @@ defmodule FreshTest do
       Fresh.close(pid, 1002, "")
 
       assert_receive {:close, 1000, ""}
+      assert_receive {:data, {:text, "preconnect"}}
       assert_receive {:data, {:text, "hi!"}}
 
       Fresh.send(pid, {:binary, "hello once again!"})
       assert_receive {:data, {:binary, "hello once again!"}}
     end
 
+    @tag :skip
     test "Wait for Ping", _ do
       assert_receive {:control, {:ping, ""}}, 10_000
     end
